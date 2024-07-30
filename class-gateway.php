@@ -1,6 +1,6 @@
 <?php
 
-class WC_GSama extends WC_Payment_Gateway
+class WC_Sama_Credit_Gateway extends WC_Payment_Gateway
 {
     protected string $api_key;
 
@@ -15,12 +15,12 @@ class WC_GSama extends WC_Payment_Gateway
     public function __construct()
     {
         // Gateway Info
-        $this->id = 'WC_GSama';
-        $this->method_title = 'پرداخت امن سما + ضمانت خرید';
-        $this->method_description = 'ضمانت 15 روزۀ بازگشت 100 درصد وجه';
+        $this->id = 'WC_Sama_Credit_Gateway';
+        $this->method_title = 'پرداخت اعتباری سما';
+        $this->method_description = 'خرید اعتباری سما';
         $this->has_fields = false;
         $this->icon = apply_filters(
-            'WC_GSama_logo',
+            'WC_Sama_Credit_Gateway_logo',
             plugins_url('/assets/images/logo.png', __FILE__)
         );
 
@@ -107,7 +107,7 @@ class WC_GSama extends WC_Payment_Gateway
 
     public function api_key_is_valid($api_key)
     {
-        $healthcheck_url = 'https://app.sama.ir/api/stores/services/deposits/health/';
+        $healthcheck_url = 'https://stage.app.sama.ir/api/stores/services/deposits/health/';
         $response = wp_remote_get(
             $healthcheck_url,
             [
@@ -124,7 +124,7 @@ class WC_GSama extends WC_Payment_Gateway
 
     public function init_form_fields()
     {
-        $this->form_fields = apply_filters('WC_GSama_Config', [
+        $this->form_fields = apply_filters('WC_Sama_Credit_Gateway_Config', [
             'enabled' => [
                 'title' => 'فعال / غیرفعال',
                 'type' => 'checkbox',
@@ -135,7 +135,7 @@ class WC_GSama extends WC_Payment_Gateway
                 'title' => 'عنوان درگاه',
                 'type' => 'text',
                 'description' => 'عنوان درگاه را وارد کنید.',
-                'default' => 'پرداخت امن سما + ضمانت خرید',
+                'default' => 'پرداخت اعتباری سما',
             ],
             'description' => [
                 'title' => 'توضیحات درگاه',
@@ -186,7 +186,7 @@ class WC_GSama extends WC_Payment_Gateway
         $order = new WC_Order($order_id);
 
         $currency = apply_filters(
-            'WC_GSama_Currency',
+            'WC_Sama_Credit_Gateway_Currency',
             $order->get_currency(),
             $order_id
         );
@@ -211,7 +211,7 @@ class WC_GSama extends WC_Payment_Gateway
         );
 
         $response = wp_remote_post(
-            'https://app.sama.ir/api/stores/services/deposits/guaranteed/',
+            'https://stage.app.sama.ir/api/stores/services/deposits/guaranteed/',
             [
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -228,7 +228,7 @@ class WC_GSama extends WC_Payment_Gateway
                     'callback_url' => add_query_arg(
                         'wc_order',
                         $order_id,
-                        WC()->api_request_url('wc_gsama')
+                        WC()->api_request_url('wc_sama_credit_gateway')
                     ),
                 ]),
                 'data_format' => 'body',
@@ -264,16 +264,16 @@ class WC_GSama extends WC_Payment_Gateway
             exit;
         }
 
-        update_post_meta($order_id, 'gsama_transaction_id', $data->uid);
-        update_post_meta($order_id, 'gsama_transaction_price', $data->price);
-        update_post_meta($order_id, 'gsama_transaction_fee', $data->fee);
+        update_post_meta($order_id, 'sama_credit_transaction_id', $data->uid);
+        update_post_meta($order_id, 'sama_credit_transaction_price', $data->price);
+        update_post_meta($order_id, 'sama_credit_transaction_fee', $data->fee);
         update_post_meta(
             $order_id,
-            'gsama_transaction_total_price',
+            'sama_credit_transaction_total_price',
             $data->total_price
         );
-        update_post_meta($order_id, 'gsama_transaction_status', 201);
-        update_post_meta($order_id, 'gsama_transaction_client_id', $client_id);
+        update_post_meta($order_id, 'sama_credit_transaction_status', 201);
+        update_post_meta($order_id, 'sama_credit_transaction_client_id', $client_id);
 
         $note = 'کاربر به درگاه پرداخت ارجاع شد. شناسه تراکنش: '.$data->uid;
         $order->add_order_note($note);
@@ -313,32 +313,32 @@ class WC_GSama extends WC_Payment_Gateway
 
         $saved_transaction_id = get_post_meta(
             $order_id,
-            'gsama_transaction_id',
+            'sama_credit_transaction_id',
             true
         );
         $saved_transaction_status = get_post_meta(
             $order_id,
-            'gsama_transaction_status',
+            'sama_credit_transaction_status',
             true
         );
         $saved_payment_price = get_post_meta(
             $order_id,
-            'gsama_transaction_price',
+            'sama_credit_transaction_price',
             true
         );
         $saved_payment_fee = get_post_meta(
             $order_id,
-            'gsama_transaction_fee',
+            'sama_credit_transaction_fee',
             true
         );
         $saved_payment_total_price = get_post_meta(
             $order_id,
-            'gsama_transaction_total_price',
+            'sama_credit_transaction_total_price',
             true
         );
         $saved_client_id = get_post_meta(
             $order_id,
-            'gsama_transaction_client_id',
+            'sama_credit_transaction_client_id',
             true
         );
 
@@ -371,7 +371,7 @@ class WC_GSama extends WC_Payment_Gateway
         }
 
         $response = wp_remote_post(
-            'https://app.sama.ir/api/stores/services/deposits/guaranteed/payment/verify/',
+            'https://stage.app.sama.ir/api/stores/services/deposits/guaranteed/payment/verify/',
             [
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -462,13 +462,13 @@ class WC_GSama extends WC_Payment_Gateway
             exit;
         }
 
-        update_post_meta($order_id, 'gsama_transaction_status', 200);
+        update_post_meta($order_id, 'sama_credit_transaction_status', 200);
         update_post_meta(
             $order_id,
-            'gsama_reference_number',
+            'sama_credit_reference_number',
             $reference_number
         );
-        update_post_meta($order_id, 'gsama_payment_id', $data->payment->id);
+        update_post_meta($order_id, 'sama_credit_payment_id', $data->payment->id);
 
         $new_status = $this->checkDownloadableItem($order)
             ? 'completed'
@@ -491,7 +491,7 @@ class WC_GSama extends WC_Payment_Gateway
 
     private function display_success_message($order_id, $default_notice = '')
     {
-        $track_id = get_post_meta($order_id, 'gsama_reference_number', true);
+        $track_id = get_post_meta($order_id, 'sama_credit_reference_number', true);
         $notice = wpautop(wptexturize($this->success_message));
         if (empty($notice)) {
             $notice = $default_notice;
